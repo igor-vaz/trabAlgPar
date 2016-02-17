@@ -27,6 +27,10 @@ void imprimeMatriz(int **matriz)
 
 int* SomaPrefix(int vetor[], int tamanho){
 	int i,sum;
+	printf("vetor de entrada: ");
+	for(i = 0; i<tamanho;i++)
+		printf("%d ",vetor[i] );
+	printf("\n");
 	i = 0;
 	int *ret = (int *)calloc(tamanho, sizeof(int));
 	sum = vetor[0];
@@ -120,27 +124,27 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 			printf("valor = %d ",vetor[j] );
 			printf("getbit #%d = %d ",i,bit[0]);
 			if( bit[0] == 0){
-				marcabit[i] = 1;
-				printf("marcabit %d\n ", marcabit[i]);
+				marcabit[j] = 1;
+				printf("marcabit %d\n ", marcabit[j]);
 			}
 			else{
-				marcabit[i] = 0;
-				printf("marcabit %d\n ", marcabit[i]);
+				marcabit[j] = 0;
+				printf("marcabit %d\n ", marcabit[j]);
 			}
 		}
 		prefix = SomaPrefix(marcabit, tamanho);
 		nUns = prefix[tamanho-1];
+		printf("prefix: ");
+		for (i = 0; i < tamanho; i++)
+			printf("%d ", prefix[i]);
+
+		printf("nUns: %d\n", nUns);
 		// for (j = 0; j < tamanho; j++)
 		// 	if(marcabit[j] == 0)
 		// 		aux[prefix[j]] = vetor[j];
 		// 	else
 		// 		aux[j+nUns-prefix[j]] = vetor[j];
 	}
-	printf("prefix: ");
-	for (i = 0; i < tamanho; i++)
-		printf("%d ", prefix[i]);
-
-	printf("nUns: %d\n", nUns);
 
 
 }
@@ -207,7 +211,7 @@ int main(int argc, char const *argv[]){
   // {
   // 	printf("%d ", b[i]); 
   // }
- radixsort2(vetor,10,5);
+ radixsort2(vetor,10,10);
   printf("\n");
 	// printf("out:");
 	// for(i=0;i<n;i++){
