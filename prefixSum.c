@@ -32,7 +32,7 @@ int* SomaPrefix(int vetor[], int tamanho){
 //		printf("%d ",vetor[i] );
 //	printf("\n");
 	i = 0;
-	int *ret = (int *)calloc(tamanho, sizeof(int));
+	int *ret = (int *)calloc(4*tamanho, sizeof(int));
 	sum = vetor[0];
 	ret[0] = sum;
 	while(i < tamanho){
@@ -49,7 +49,6 @@ void ParSomaPrefix(){
 	for(h = 1; h < n; h++)
 		B[0][h] = A[h];
 
-	
 	for (h = 1; h < log(n); h++)
 		for (j = 1; j < (int)(n/pow(2,h)); j++){
 			B[h][(int)j] = B[h-1][(int)(2j-1)]*B[h-1][(int)(2j)];
@@ -65,9 +64,8 @@ void ParSomaPrefix(){
 				C[h][(int)j]=C[h+1][(int)((j-1)/2)]*B[h][(int)j];
 }
 
-
 int *get_bit(int n, int bitswanted){
-  int *bits = malloc(sizeof(int) );
+  int *bits = malloc(4*sizeof(int) );
   int thebit;
   int k;
   for(k=0; k<bitswanted; k++){
@@ -86,7 +84,7 @@ void radixsort(int vetor[], int tamanho) {
     int maior = vetor[0];
     int exp = 1;
 
-    b = (int *)calloc(tamanho, sizeof(int));
+    b = (int *)calloc(4*tamanho, sizeof(int));
 
     for (i = 0; i < tamanho; i++) {
         if (vetor[i] > maior)
@@ -109,17 +107,16 @@ void radixsort(int vetor[], int tamanho) {
     free(b);
 }
 
-
 void radixsort2(int vetor[],int tamanho, int nbits){
 	int i,j,k;
-	int *bit= (int *)calloc(tamanho, sizeof(int));
+	int *bit= (int *)calloc(4*tamanho, sizeof(int));
 	int marcabit[tamanho];
 	int aux[tamanho];
-	int *prefix= (int *)calloc(tamanho, sizeof(int));
+	int *prefix= (int *)calloc(4*tamanho, sizeof(int));
 	int nUns;
 
 	for (i = 1; i <= nbits; i++){
-		for(j = 0; j < tamanho; j++){
+		cilk_for(j = 0; j < tamanho; j++){
 			bit = get_bit(vetor[j], i);
 	//		printf("valor = %d ",vetor[j] );
 	//		printf("getbit #%d = %d ",i,bit[0]);
@@ -137,7 +134,7 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 		//printf("prefix: ");
 
 		//printf("nUns: %d\n", nUns);
-		for (j = 0; j < tamanho; j++){
+		cilk_for (j = 0; j < tamanho; j++){
 			if(marcabit[j] == 0)
 		 		aux[prefix[j]] = vetor[j];
 		 	else
