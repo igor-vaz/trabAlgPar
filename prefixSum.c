@@ -43,6 +43,61 @@ int* SomaPrefix(int vetor[], int tamanho){
 	return ret;
 }
 
+int* ParSomaPrefix2(int vetor[], int n){
+  int logn = (int)log2(n);
+  int B[logn][n];
+  int C[logn][n];
+  int i, j;
+  int *ret = (int*)malloc(n*sizeof(int));
+
+  cilk_for (i = 0; i < n; i++)
+  {
+    B[0][i] = vetor[i];
+  }
+
+  for (i = 1; i <= logn; i++)
+  {
+    int pot =(int) pow(2,i);
+    cilk_for (j = 0; j < (n/pot); j++)
+    {
+      B[i][j] = B[i-1][2*j] + B[i-1][(2*j)+1];
+    }
+  }
+
+  for (i = logn; i >= 0 ; i--)
+  {
+    int pot =(int) pow(2,i);
+    cilk_for (j = 0; j < (n/pot); j++)
+    {
+      if (j == 0)
+      {
+        C[i][0] = B[i][0];
+        if (i == 0)
+        {
+          ret[j] = B[i][0];
+        }
+      }
+      else if (j % 2 == 0)
+      {
+        C[i][j] = C[i+1][(j-1)/2] + B[i][j];
+        if (i == 0)
+        {
+          ret[j] = C[i+1][(j-1)/2] + B[i][j];
+        }
+      }
+      else if (j % 2 == 1)
+      {
+        C[i][j] = C[i+1][j/2];
+        if (i == 0)
+        {
+          ret[j] = C[i+1][j/2];
+        }
+      }
+    }
+  } 
+  return ret;
+}
+
 void ParSomaPrefix(){
 	int h,j;
 	
@@ -129,7 +184,7 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 	//			printf("marcabit %d\n ", marcabit[j]);
 			}
 		}
-		prefix = SomaPrefix(marcabit, tamanho);
+		prefix = ParSomaPrefix2(marcabit, tamanho);
 		nUns = prefix[tamanho-1];
 		//printf("prefix: ");
 
@@ -147,7 +202,7 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 
 int main(int argc, char const *argv[]){
 	int i,j;
-	// double inicio,fim;
+  double inicio,fim;
 	// n = 10;
 	// int*bit;
 	int vetor[10]={10,9,8,7,6,5,4,3,2,1};
@@ -175,7 +230,7 @@ int main(int argc, char const *argv[]){
 	// for(i=0;i<n;i++)
 	// 	in[i] = i+1;
 	
-	// GET_TIME(inicio);
+	 GET_TIME(inicio);
 	// //SomaPrefix();
 	// //cilk_spawn ParSomaPrefix();
 	// //radixsort(vetor,10);
@@ -209,6 +264,8 @@ int main(int argc, char const *argv[]){
   // }
 	radixsort2(vetor,10,10);
 	printf("\n");
+  GET_TIME(fim);
+  printf("tempo: %lf\n", fim-inicio);
 	// printf("out:");
 	// for(i=0;i<n;i++){
 	// 	printf("%d ", out[i]);
