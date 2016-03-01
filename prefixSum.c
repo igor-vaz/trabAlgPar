@@ -3,15 +3,11 @@
 #include <math.h>
 #include <cilk/cilk.h>
 #include "timer.h"
-
-
-int *A, *in, *out;
-int **B,**	C;
-int n;
+#include <time.h>
 
 // radix sort com soma de prefixo
 
-void imprimeMatriz(int **matriz)
+void imprimeMatriz(int **matriz, int n)
 {
 	int i,j;
 
@@ -43,7 +39,7 @@ int* SomaPrefix(int vetor[], int tamanho){
 	return ret;
 }
 
-int* ParSomaPrefix2(int vetor[], int n){
+int* ParSomaPrefix(int vetor[], int n){
   int logn = (int)log2(n);
   int B[logn][n];
   int C[logn][n];
@@ -95,28 +91,8 @@ int* ParSomaPrefix2(int vetor[], int n){
       }
     }
   } 
+
   return ret;
-}
-
-void ParSomaPrefix(){
-	int h,j;
-	
-	for(h = 1; h < n; h++)
-		B[0][h] = A[h];
-
-	for (h = 1; h < log(n); h++)
-		for (j = 1; j < (int)(n/pow(2,h)); j++){
-			B[h][(int)j] = B[h-1][(int)(2j-1)]*B[h-1][(int)(2j)];
-		}
-
-	for (h = log(n); h < 1 ; h--)
-		for (j = 1; j < (n/pow(2,h)); j++)
-			if(j % 2 == 0)
-				C[h][(int)j] = C[h+1][(int)(j/2)];
-			else if(j == 1)
-				C[h][1] = B[h][1];
-			else if ((j%2 != 0) && j > 1)
-				C[h][(int)j]=C[h+1][(int)((j-1)/2)]*B[h][(int)j];
 }
 
 int *get_bit(int n, int bitswanted){
@@ -168,13 +144,15 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 	int marcabit[tamanho];
 	int aux[tamanho];
 	int *prefix= (int *)calloc(4*tamanho, sizeof(int));
-	int nUns;
-
+	int nUns = 0;
+	int swap = 0;
+	//i=1;
 	for (i = 1; i <= nbits; i++){
 		cilk_for(j = 0; j < tamanho; j++){
 			bit = get_bit(vetor[j], i);
-	//		printf("valor = %d ",vetor[j] );
-	//		printf("getbit #%d = %d ",i,bit[0]);
+		//	printf("valor = %d ",vetor[j] );
+		//	printf("getbit #%d = %d ",i,bit[0]);
+		//	printf("\n");
 			if( bit[0] == 0){
 				marcabit[j] = 1;
 	//			printf("marcabit %d\n ", marcabit[j]);
@@ -184,94 +162,67 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 	//			printf("marcabit %d\n ", marcabit[j]);
 			}
 		}
-		prefix = ParSomaPrefix2(marcabit, tamanho);
+		prefix = ParSomaPrefix(marcabit, tamanho);
 		nUns = prefix[tamanho-1];
 		//printf("prefix: ");
 
 		//printf("nUns: %d\n", nUns);
+	/*	printf("vetor: ");
+		for (j = 0; j < tamanho; j++)
+			printf("%d ", vetor[j] );
+
+		printf("prefix: ");
+		for (j = 0; j < tamanho; j++)
+			printf("%d ", prefix[j] );
+*/
+
 		cilk_for (j = 0; j < tamanho; j++){
-			if(marcabit[j] == 0)
-		 		aux[prefix[j]] = vetor[j];
-		 	else
-		 		aux[j+nUns-prefix[j]] = vetor[j];
+			//bit = get_bit(vetor[j], i);
+			if(marcabit[j] == 0){
+				//if(vetor[prefix[j]]<vetor[j]){
+					swap = vetor[prefix[j]];
+					vetor[prefix[j]] = vetor[j];
+					vetor[j] = swap;
+				//}
+		 		//aux[prefix[j]] = vetor[j];
+			}
+		 	else{
+		 		//if (vetor[j+nUns-prefix[j]] < vetor[j]){
+			 		swap = vetor[j+nUns-prefix[j]];
+			 		vetor[j+nUns-prefix[j]] = vetor[j];
+			 		vetor[j] = swap;
+		 			
+		 		//}
+		 		//aux[j+nUns-prefix[j]] = vetor[j];
+		 		
+		 	}
 		}
+		//printf("\n");
 	}
 	for (i = 0; i < tamanho; i++)
-		printf("%d ", prefix[i]);
+		printf("%d ", vetor[i]);
 }
 
 int main(int argc, char const *argv[]){
 	int i,j;
-  double inicio,fim;
-	// n = 10;
-	// int*bit;
-	int vetor[10]={10,9,8,7,6,5,4,3,2,1};
-	// for(j = 0; j < 10; j++){
-	// 	bit = get_bit(vetor[j], 1);
-	// 	printf("%d\n", bit[0]);
-	// }
-	// in = (int*) malloc(n*sizeof(int));
-	// out = (int*) malloc(n*sizeof(int));
-	// A = (int*) malloc(n*sizeof(int));
-	// B = (int**) malloc(n*sizeof(int*));
-	// C = (int**) malloc(n*sizeof(int*));
-	// for(i=0;i<n;i++)
-	// {
-	//  	*(B+i)=(int*) malloc(log(n)*sizeof(int));
-	//  	*(C+i)=(int*) malloc(log(n)*sizeof(int));
-	// 	A[i] = 1;
-	// }
-	// for(i=0;i<n;i++)
-	// 	for(j=0;j<log(n);j++){
-	//   		B[i][(int)j] = 0;
-	//   		C[i][(int)j] = 0;
-	//   	}
-
-	// for(i=0;i<n;i++)
-	// 	in[i] = i+1;
+  	double inicio,fim;
+	int tamanho = 1024;
+	int nbits = 10;
+	int vetor[tamanho];
+	srand(time(NULL));
 	
-	 GET_TIME(inicio);
-	// //SomaPrefix();
-	// //cilk_spawn ParSomaPrefix();
-	// //radixsort(vetor,10);
-	// radixsort2(vetor,10);
-	// GET_TIME(fim);
-	// printf("tempo: %lf\n", fim-inicio);
-	// // printf("vetor:");
-	// for(i=0;i<n;i++){
-	//  	printf("%d ", vetor[i]);
-	// }
-	// printf("\n");
-  // int n=7;
-
-  // int  bitswanted = 3;
-
-  // int *bits = get_bit(n, bitswanted);
-
-  // printf("%d = ", n);
-
-  //for(i=bitswanted-1; i>=0;i--){
-//    printf("%d ", bits[0]);
-  //}
-
-  // printf("\n");
-  // int *b;
-  // b = SomaPrefix(vetor,10);
-  // printf("prefixo:");	
-  // for (i = 0; i < n; i++)
-  // {
-  // 	printf("%d ", b[i]); 
-  // }
-	radixsort2(vetor,10,10);
+	for (i = tamanho-1; i >= 0; i--)
+	{
+		vetor[i] = i+1;
+		printf("%d ",vetor[i] );
+	}
 	printf("\n");
-  GET_TIME(fim);
-  printf("tempo: %lf\n", fim-inicio);
-	// printf("out:");
-	// for(i=0;i<n;i++){
-	// 	printf("%d ", out[i]);
-	// }
-	// printf("\n");
-	//cilk_sync;
-	//imprimeMatriz(C);
+
+	GET_TIME(inicio);
+	radixsort2(vetor,tamanho,nbits);
+	printf("\n");
+	GET_TIME(fim);
+  	printf("tempo: %lf\n", fim-inicio);
+
 	return 0;
 }
