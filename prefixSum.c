@@ -226,8 +226,8 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 	// for (i = 0; i < tamanho; i++)
 	// 	printf("%d ", aux[i]);
 	// printf("\n");
-	
-		printf("%d ", vetor[tamanho-1]);
+	for (i = 0; i < tamanho; i++)
+		printf("%d ", vetor[i]);
 		
 }
 
