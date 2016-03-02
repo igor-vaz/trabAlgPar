@@ -44,7 +44,7 @@ int* ParSomaPrefix(int vetor[], int n){
   int B[logn][n];
   int C[logn][n];
   int i, j;
-  int *ret = (int*)malloc(n*sizeof(int));
+  int *ret = (int*)calloc(n,sizeof(int)+1);
 
   cilk_for (i = 0; i < n; i++)
   {
@@ -70,7 +70,7 @@ int* ParSomaPrefix(int vetor[], int n){
         C[i][0] = B[i][0];
         if (i == 0)
         {
-          ret[j] = B[i][0];
+          ret[j+1] = B[i][0];
         }
       }
       else if (j % 2 == 0)
@@ -78,7 +78,7 @@ int* ParSomaPrefix(int vetor[], int n){
         C[i][j] = C[i+1][(j-1)/2] + B[i][j];
         if (i == 0)
         {
-          ret[j] = C[i+1][(j-1)/2] + B[i][j];
+          ret[j+1] = C[i+1][(j-1)/2] + B[i][j];
         }
       }
       else if (j % 2 == 1)
@@ -86,7 +86,7 @@ int* ParSomaPrefix(int vetor[], int n){
         C[i][j] = C[i+1][j/2];
         if (i == 0)
         {
-          ret[j] = C[i+1][j/2];
+          ret[j+1] = C[i+1][j/2];
         }
       }
     }
@@ -143,9 +143,12 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 	int *bit= (int *)calloc(4*tamanho, sizeof(int));
 	int marcabit[tamanho];
 	int aux[tamanho];
-	int *prefix= (int *)calloc(4*tamanho, sizeof(int));
+	int *prefix= (int *)calloc(4*tamanho+1, sizeof(int));
 	int nUns = 0;
 	int swap = 0;
+	for (k = 0; k < tamanho; k++)
+		aux[k] = 0;
+
 	//i=1;
 	for (i = 1; i <= nbits; i++){
 		cilk_for(j = 0; j < tamanho; j++){
@@ -155,68 +158,93 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 		//	printf("\n");
 			if( bit[0] == 0){
 				marcabit[j] = 1;
-	//			printf("marcabit %d\n ", marcabit[j]);
+				// printf("marcabit %d\n ", marcabit[j]);
 			}
 			else{
 				marcabit[j] = 0;
-	//			printf("marcabit %d\n ", marcabit[j]);
+				// printf("marcabit %d\n ", marcabit[j]);
 			}
 		}
 		prefix = ParSomaPrefix(marcabit, tamanho);
-		nUns = prefix[tamanho-1];
+		nUns = prefix[tamanho];
 		//printf("prefix: ");
 
-		//printf("nUns: %d\n", nUns);
-	/*	printf("vetor: ");
-		for (j = 0; j < tamanho; j++)
-			printf("%d ", vetor[j] );
+		// printf("nUns: %d\n", nUns);
+		// printf("vetor: ");
 
-		printf("prefix: ");
-		for (j = 0; j < tamanho; j++)
-			printf("%d ", prefix[j] );
-*/
+
+		// printf("prefix: ");
+		// for (j = 0; j < tamanho; j++)
+		// 	printf("%d ", prefix[j] );
+		// printf("\n");
 
 		cilk_for (j = 0; j < tamanho; j++){
 			//bit = get_bit(vetor[j], i);
-			if(marcabit[j] == 0){
+			
+			int k;
+			// for (k = 0; k < tamanho; k++)
+			// 	printf("%d ", vetor[k] );
+			// printf("\n");
+			if(marcabit[j] == 1){
 				//if(vetor[prefix[j]]<vetor[j]){
-					swap = vetor[prefix[j]];
-					vetor[prefix[j]] = vetor[j];
-					vetor[j] = swap;
+					// printf("prefix[%d] = %d \n", j,prefix[j]);
+					// printf("vetor[%d] = %d \n", j,vetor[j]);
+				// printf("j:%d\n",j );
+		 		aux[prefix[j]] = vetor[j];
+		 		//vetor[j] = aux[prefix[j]];
+				// for (k = 0; k < tamanho; k++)
+				// 	printf("%d ", aux[k] );
+				// printf("\n");
+					
+					// swap = vetor[prefix[j]];
+					// vetor[prefix[j]] = vetor[j];
+					// vetor[j] = swap;
+					
 				//}
-		 		//aux[prefix[j]] = vetor[j];
 			}
 		 	else{
+		 		// printf("j:%d\n",j );
+		 		aux[j+nUns-prefix[j]] = vetor[j];
+		 	// 	for (k = 0; k < tamanho; k++)
+				// 	printf("%d ", aux[k] );
+				// printf("\n");
 		 		//if (vetor[j+nUns-prefix[j]] < vetor[j]){
-			 		swap = vetor[j+nUns-prefix[j]];
-			 		vetor[j+nUns-prefix[j]] = vetor[j];
-			 		vetor[j] = swap;
+			 		// swap = vetor[j+nUns-prefix[j]];
+			 		// vetor[j+nUns-prefix[j]] = vetor[j];
+			 		// vetor[j] = swap;
 		 			
-		 		//}
-		 		//aux[j+nUns-prefix[j]] = vetor[j];
-		 		
+		 		//}		 		
 		 	}
 		}
-		//printf("\n");
+		 	cilk_for(k = 0; k < tamanho; k++)
+		 		vetor[k] = aux[k];
+		 // 	printf("vetor :");
+		 // 	cilk_for(k = 0; k < tamanho; k++)
+		 // 		printf("%d ", vetor[k]);
+			// printf("\n");
 	}
-	for (i = 0; i < tamanho; i++)
-		printf("%d ", vetor[i]);
+	// for (i = 0; i < tamanho; i++)
+	// 	printf("%d ", aux[i]);
+	// printf("\n");
+	
+		printf("%d ", vetor[tamanho-1]);
+		
 }
 
 int main(int argc, char const *argv[]){
 	int i,j;
   	double inicio,fim;
-	int tamanho = 1024;
-	int nbits = 10;
-	int vetor[tamanho];
+	int tamanho = 8000;
+	int nbits = (int)ceil(log2(tamanho))+1;
+	int *vetor = (int*)malloc(tamanho*sizeof(int));
 	srand(time(NULL));
 	
-	for (i = tamanho-1; i >= 0; i--)
+	for (i = 0; i < tamanho; i++)
 	{
-		vetor[i] = i+1;
-		printf("%d ",vetor[i] );
+		vetor[i] = tamanho-i;
+		// printf("%d ",vetor[i] );
 	}
-	printf("\n");
+	// printf("\n");
 
 	GET_TIME(inicio);
 	radixsort2(vetor,tamanho,nbits);
