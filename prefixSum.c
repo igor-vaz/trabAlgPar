@@ -234,17 +234,17 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 int main(int argc, char const *argv[]){
 	int i,j;
   	double inicio,fim;
-	int tamanho = 8000;
+	int tamanho = 10;
 	int nbits = (int)ceil(log2(tamanho))+1;
 	int *vetor = (int*)malloc(tamanho*sizeof(int));
 	srand(time(NULL));
 	
 	for (i = 0; i < tamanho; i++)
 	{
-		vetor[i] = tamanho-i;
-		// printf("%d ",vetor[i] );
+		vetor[i] = rand()%tamanho;
+		printf("%d ",vetor[i] );
 	}
-	// printf("\n");
+	printf("\n");
 
 	GET_TIME(inicio);
 	radixsort2(vetor,tamanho,nbits);
