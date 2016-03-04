@@ -7,7 +7,6 @@
 #include <unistd.h>
 
 // radix sort com soma de prefixo
-
 int **B, **C;
 
 int* SomaPrefix(int vetor[], int tamanho){
@@ -160,7 +159,6 @@ int main(int argc, char const *argv[]){
 	int i,j;
 	int*ret;
   	double inicio,fim;
-	//int tamanho = (int)pow(2,25);
 	int tamanho = atoi(argv[1]);
 	long int nbits = (int)ceil(log2(tamanho))+1;
 	int *vetor = (int*)malloc(tamanho*sizeof(int));
@@ -190,13 +188,12 @@ int main(int argc, char const *argv[]){
 	GET_TIME(fim);
   	printf("tempo paralelo: %lf\n", fim-inicio);
   	printf("\n");
-
+  	
   	for(i = 0; i < logn; i++){
 		free(*(B+i));
 		free(*(C+i));		
 	}
 	free(B);
 	free(C);
-
 	return 0;
 }
