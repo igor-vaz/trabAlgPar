@@ -4,8 +4,11 @@
 #include <cilk/cilk.h>
 #include "timer.h"
 #include <time.h>
+#include <unistd.h>
 
 // radix sort com soma de prefixo
+
+int **B, **C;
 
 int* SomaPrefix(int vetor[], int tamanho){
 	int i,sum;
@@ -21,19 +24,9 @@ int* SomaPrefix(int vetor[], int tamanho){
 	return ret;
 }
 
-int* ParSomaPrefix(int vetor[], int n){
+void ParSomaPrefix(int vetor[], int n, int* ret){
 	int logn = (int)log2(n)+1;
-	// int B[logn][n];
-	// int C[logn][n];
-	int **B = (int**)malloc(logn*sizeof(int*));
-	int **C = (int**)malloc(logn*sizeof(int*));
 	int i, j;
-	int *ret = (int*)malloc(n*sizeof(int)+1);
-
-	for(i = 0; i < logn; i++){
-		*(B+i) = (int*)malloc(n*sizeof(int));
-		*(C+i) = (int*)malloc(n*sizeof(int));		
-	}
 
 	cilk_for (i = 0; i < n; i++)
   	{
@@ -80,22 +73,17 @@ int* ParSomaPrefix(int vetor[], int n){
 	      	}
 	    }
 	} 
-	free(B);
-	free(C);
-	return ret;
 }
 
-int *get_bit(int n, int bitswanted){
-	int *bits = (int*)malloc(sizeof(int));
+int get_bit(int n, int bitswanted){
 	int thebit;
 	int k;
 	for(k=0; k<bitswanted; k++){
 		int mask =  1 << k;
 		int masked_n = n & mask;
 		thebit = masked_n >> k;
-		bits[0] = thebit;
 	}
-	return bits;
+	return thebit;
 }
 
 void radixsort(int vetor[], int tamanho) {
@@ -123,13 +111,12 @@ void radixsort(int vetor[], int tamanho) {
     	    vetor[i] = b[i];
     	exp *= 10;
     }
-
     free(b);
 }
 
 void radixsort2(int vetor[],int tamanho, int nbits){
 	int i,j,k;
-	int *bit = (int*)malloc(tamanho*sizeof(int));
+	int bit;
 	int *marcabit = (int*)malloc(tamanho*sizeof(int));
 	int *aux = (int*)malloc(tamanho*sizeof(int));
 	int *prefix = (int*)malloc(tamanho*sizeof(int)+1);
@@ -138,14 +125,14 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 	for (i = 1; i <= nbits; i++){
 		cilk_for(j = 0; j < tamanho; j++){
 			bit = get_bit(vetor[j], i);
-			if( bit[0] == 0){
+			if( bit == 0){
 				marcabit[j] = 1;
 			}
 			else{
 				marcabit[j] = 0;
 			}
 		}
-		prefix = ParSomaPrefix(marcabit, tamanho);
+		ParSomaPrefix(marcabit, tamanho,prefix);
 		nUns = prefix[tamanho];
 		cilk_for (j = 0; j < tamanho; j++){
 			if(marcabit[j] == 1){
@@ -158,10 +145,9 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 		cilk_for(k = 0; k < tamanho; k++)
 			vetor[k] = aux[k];
 	}
-	free(bit);
+	free(prefix);
 	free(marcabit);
 	free(aux);
-	free(prefix);
 }
 
 int main(int argc, char const *argv[]){
@@ -179,7 +165,15 @@ int main(int argc, char const *argv[]){
 	long int nbits = (int)ceil(log2(tamanho))+1;
 	int *vetor = (int*)malloc(tamanho*sizeof(int));
 	srand(time(NULL));
-	
+	int logn = (int)log2(tamanho)+1;
+	B = (int**)malloc(logn*sizeof(int*));
+	C = (int**)malloc(logn*sizeof(int*));
+
+	for(i = 0; i < logn; i++){
+		*(B+i) = (int*)malloc(tamanho*sizeof(int));
+		*(C+i) = (int*)malloc(tamanho*sizeof(int));		
+	}
+
 	for (i = 0; i < tamanho; i++)
 	{
 		vetor[i] = rand()%tamanho;
@@ -196,5 +190,13 @@ int main(int argc, char const *argv[]){
 	GET_TIME(fim);
   	printf("tempo paralelo: %lf\n", fim-inicio);
   	printf("\n");
+
+  	for(i = 0; i < logn; i++){
+		free(*(B+i));
+		free(*(C+i));		
+	}
+	free(B);
+	free(C);
+
 	return 0;
 }
