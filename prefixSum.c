@@ -135,9 +135,6 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 	int *prefix = (int*)malloc(tamanho*sizeof(int)+1);
 	int nUns = 0;
 	
-	for (k = 0; k < tamanho; k++)
-		aux[k] = 0;
-
 	for (i = 1; i <= nbits; i++){
 		cilk_for(j = 0; j < tamanho; j++){
 			bit = get_bit(vetor[j], i);
@@ -150,7 +147,6 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 		}
 		prefix = ParSomaPrefix(marcabit, tamanho);
 		nUns = prefix[tamanho];
-
 		cilk_for (j = 0; j < tamanho; j++){
 			if(marcabit[j] == 1){
 		 		aux[prefix[j]] = vetor[j];
@@ -162,9 +158,10 @@ void radixsort2(int vetor[],int tamanho, int nbits){
 		cilk_for(k = 0; k < tamanho; k++)
 			vetor[k] = aux[k];
 	}
-
-	printf("%d ", vetor[tamanho-1]);
-	printf("%d ", vetor[0]);
+	free(bit);
+	free(marcabit);
+	free(aux);
+	free(prefix);
 }
 
 int main(int argc, char const *argv[]){
@@ -188,19 +185,16 @@ int main(int argc, char const *argv[]){
 		vetor[i] = rand()%tamanho;
 	}
 
+	printf("executando com tamanho %d\n",tamanho);
 	GET_TIME(inicio);
 	radixsort(vetor,tamanho);
-	//ret=SomaPrefix(vetor,tamanho);
-	printf("\n");
 	GET_TIME(fim);
   	printf("tempo sequencial: %lf\n", fim-inicio);
 
 	GET_TIME(inicio);
 	radixsort2(vetor,tamanho,nbits);
-	//ret=ParSomaPrefix(vetor,tamanho);
-	printf("\n");
 	GET_TIME(fim);
   	printf("tempo paralelo: %lf\n", fim-inicio);
-
+  	printf("\n");
 	return 0;
 }
